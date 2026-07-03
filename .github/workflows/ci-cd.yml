@@ -40,6 +40,10 @@ jobs:
     needs: test
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
+    # ADDED PERMISSIONS BLOCK HERE
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
