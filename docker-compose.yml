@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: careos-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_PATH=/app/data/database.sqlite
+      - JWT_SECRET=careos-secure-jwt-secret-key-38291
+    volumes:
+      - sqlite-data:/app/data
+    networks:
+      - careos-network
+    # Healthcheck verified inside Dockerfile, docker-compose inherits it
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: careos-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - careos-network
+
+volumes:
+  sqlite-data:
+    driver: local
+
+networks:
+  careos-network:
+    driver: bridge
