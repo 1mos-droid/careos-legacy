@@ -9,6 +9,7 @@ export default function Input({
   rightIcon: RightIcon = null,
   className = '',
   required = false,
+  isNeumorphic = false,
   ...props
 }) {
   const generatedId = useId();
@@ -44,6 +45,7 @@ export default function Input({
           required={required}
           className={`
             input-field text-sm transition-all duration-300 w-full rounded-[20px] py-3.5 px-5
+            ${isNeumorphic ? 'neumorphic-concave border-transparent bg-brand-bg shadow-none' : ''}
             ${LeftIcon ? 'pl-12' : ''} 
             ${RightIcon ? 'pr-12' : ''}
             ${error ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : 'focus:border-brand-primary focus:ring-brand-primary/20'} 
