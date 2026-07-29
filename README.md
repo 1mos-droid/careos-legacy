@@ -7,6 +7,7 @@ Careos is a completely localized full-stack MVP designed to help families find, 
 This project is organized as a monorepo:
 * **`/backend`**: Node.js & Express.js REST API using SQLite as a local, file-based database, with local JWT/bcrypt-based authentication.
 * **`/frontend`**: React frontend built with Vite, using vanilla CSS for premium styling.
+* **`DEVELOPMENT.md`**: Refer directly to [DEVELOPMENT.md](DEVELOPMENT.md) for full engineering specifications, database schemas, API endpoint details, styling guidelines, and deployment details.
 
 ---
 
