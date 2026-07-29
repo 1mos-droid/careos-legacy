@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Award, Clock, CheckCircle2, AlertTriangle, FileText, 
-  Send, User, ShieldCheck, DollarSign, Calendar, Edit3, Settings
+  ShieldCheck, Calendar, Edit3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../utils/api';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
-export default function NurseDashboard({ user, token }) {
+// ponytail: Unused React, icon imports, and unused token prop removed for YAGNI.
+export default function NurseDashboard({ user }) {
   const [profile, setProfile] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -157,7 +160,7 @@ export default function NurseDashboard({ user, token }) {
         )}
 
         {/* Tab Selection */}
-        <div className="grid grid-cols-3 gap-2 p-1 bg-slate-100/50 rounded-2xl max-w-lg border border-slate-200/50">
+        <div className="grid grid-cols-3 gap-2 p-1 bg-brand-bg rounded-2xl max-w-lg border border-transparent neumorphic-concave">
           {[
             { id: 'bookings', label: 'Booking Requests', icon: Calendar },
             { id: 'profile', label: 'Profile Setup', icon: Edit3 },
@@ -184,21 +187,23 @@ export default function NurseDashboard({ user, token }) {
                 <h3 className="text-xl font-black text-slate-900 tracking-tight">Active Client Requests</h3>
                 
                 {bookings.length === 0 ? (
-                  <div className="glass-card rounded-[40px] p-12 text-center space-y-4 max-w-2xl mx-auto border-dashed border-2 border-slate-200">
+                  <Card isPremium={true} isNeumorphic={true} className="p-12 text-center space-y-4 max-w-2xl mx-auto border-dashed border-2 border-slate-200">
                     <div className="h-16 w-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
                       <FileText className="h-8 w-8" />
                     </div>
-                    <h4 className="text-lg font-black text-slate-900">No Booking Log Active</h4>
-                    <p className="text-sm text-slate-500 max-w-md mx-auto">
-                      Patients have not submitted scheduling requests for your profile yet.
+                    <h4 className="text-lg font-black text-slate-900">No Bookings on the Radar Just Yet! ☕</h4>
+                    <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                      Your schedule is clear! It’s the perfect time to grab a coffee, check your credentials verify status, or tweak your specialty tags. Your next patient is just around the corner!
                     </p>
-                  </div>
+                  </Card>
                 ) : (
                   <div className="grid gap-6">
                     {bookings.map(b => (
-                      <div 
+                      <Card
                         key={b.id}
-                        className="glass-card rounded-[32px] p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 hover:shadow-xl transition-all duration-300 border-slate-100/50"
+                        isPremium={true}
+                        isNeumorphic={true}
+                        className="p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 border-slate-100/50"
                       >
                         <div className="space-y-1">
                           <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
@@ -214,7 +219,7 @@ export default function NurseDashboard({ user, token }) {
                         <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between lg:justify-center w-full lg:w-auto border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100 gap-4 shrink-0">
                           <div className="text-left lg:text-right">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculated Compensation</p>
-                            <p className="text-xl font-black text-slate-900">${b.total_price}</p>
+                            <p className="text-xl font-black text-slate-900">GH₵{b.total_price?.toLocaleString()}</p>
                           </div>
 
                           <div className="flex items-center gap-3">
@@ -223,25 +228,29 @@ export default function NurseDashboard({ user, token }) {
                             </span>
 
                             {b.status === 'pending' && (
-                              <button
+                              <Button
                                 onClick={() => handleUpdateBookingStatus(b.id, 'approved')}
-                                className="btn-primary !py-2.5 !px-5 text-xs shadow-md cursor-pointer"
+                                variant="primary"
+                                size="sm"
+                                className="!py-2.5 !px-5"
                               >
                                 Accept Booking
-                              </button>
+                              </Button>
                             )}
 
                             {b.status === 'approved' && (
-                              <button
+                              <Button
                                 onClick={() => handleUpdateBookingStatus(b.id, 'completed')}
-                                className="px-4 py-2.5 border border-brand-primary text-brand-primary hover:bg-brand-primary/5 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                                variant="outline"
+                                size="sm"
+                                className="!py-2.5 !px-4"
                               >
                                 Mark Completed
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     ))}
                   </div>
                 )}
@@ -268,55 +277,59 @@ export default function NurseDashboard({ user, token }) {
                   </div>
 
                   {/* Right Column: Form Panel */}
-                  <form onSubmit={handleUpdateProfile} className="lg:col-span-2 glass-card rounded-[40px] p-8 lg:p-10 space-y-6">
-                    <div className="grid sm:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">License Number</label>
-                        <input type="text" required value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} className="input-field" placeholder="RN-776655" />
+                  <form onSubmit={handleUpdateProfile} className="lg:col-span-2">
+                    <Card isPremium={true} isNeumorphic={true} className="p-8 lg:p-10 space-y-6">
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">License Number</label>
+                          <input type="text" required value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} className="input-field neumorphic-concave bg-brand-bg border-transparent shadow-none focus:ring-brand-primary" placeholder="RN-776655" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Daily Session Rate (GH₵)</label>
+                          <input type="number" required min={10} max={1000} value={hourlyRate} onChange={e => setHourlyRate(e.target.value)} className="input-field neumorphic-concave bg-brand-bg border-transparent shadow-none focus:ring-brand-primary" />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Hourly Billing Rate ($)</label>
-                        <input type="number" required min={10} max={250} value={hourlyRate} onChange={e => setHourlyRate(e.target.value)} className="input-field" />
+
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Clinical Availability</label>
+                          <select value={availability} onChange={e => setAvailability(e.target.value)} className="input-field neumorphic-concave bg-brand-bg border-transparent shadow-none focus:ring-brand-primary">
+                            <option value="Weekdays">Weekdays Only</option>
+                            <option value="Weekends">Weekends Only</option>
+                            <option value="24/7">24/7 Active</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Clinical Experience (Years)</label>
+                          <input type="number" required min={0} value={experienceYears} onChange={e => setExperienceYears(e.target.value)} className="input-field neumorphic-concave bg-brand-bg border-transparent shadow-none focus:ring-brand-primary" />
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="grid sm:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Clinical Availability</label>
-                        <select value={availability} onChange={e => setAvailability(e.target.value)} className="input-field">
-                          <option value="Weekdays">Weekdays Only</option>
-                          <option value="Weekends">Weekends Only</option>
-                          <option value="24/7">24/7 Active</option>
-                        </select>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Avatar Image URL</label>
+                        <input type="url" value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} className="input-field neumorphic-concave bg-brand-bg border-transparent shadow-none focus:ring-brand-primary" placeholder="https://example.com/avatar.jpg" />
                       </div>
+
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Clinical Experience (Years)</label>
-                        <input type="number" required min={0} value={experienceYears} onChange={e => setExperienceYears(e.target.value)} className="input-field" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Clinical Specialty Tags (Comma-separated)</label>
+                        <input type="text" required value={specialties} onChange={e => setSpecialties(e.target.value)} className="input-field neumorphic-concave bg-brand-bg border-transparent shadow-none focus:ring-brand-primary" placeholder="Dementia Care, Palliative Care, Wound Care" />
                       </div>
-                    </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Avatar Image URL</label>
-                      <input type="url" value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} className="input-field" placeholder="https://example.com/avatar.jpg" />
-                    </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Short Professional Bio</label>
+                        <textarea rows={4} value={bio} onChange={e => setBio(e.target.value)} className="input-field py-3 text-sm neumorphic-concave bg-brand-bg border-transparent shadow-none focus:ring-brand-primary" placeholder="Summarize your nursing specialties and patient philosophy..." />
+                      </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Clinical Specialty Tags (Comma-separated)</label>
-                      <input type="text" required value={specialties} onChange={e => setSpecialties(e.target.value)} className="input-field" placeholder="Dementia Care, Palliative Care, Wound Care" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Short Professional Bio</label>
-                      <textarea rows={4} value={bio} onChange={e => setBio(e.target.value)} className="input-field py-3 text-sm" placeholder="Summarize your nursing specialties and patient philosophy..." />
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      disabled={savingProfile}
-                      className="btn-primary w-full !py-4 text-xs disabled:opacity-50"
-                    >
-                      {savingProfile ? 'Saving Changes...' : 'Save Settings'}
-                    </button>
+                      <Button 
+                        type="submit" 
+                        disabled={savingProfile}
+                        isLoading={savingProfile}
+                        variant="primary"
+                        className="w-full"
+                      >
+                        Save Settings
+                      </Button>
+                    </Card>
                   </form>
                 </div>
               </motion.div>
@@ -339,51 +352,55 @@ export default function NurseDashboard({ user, token }) {
                     </div>
                   </div>
 
-                  <div className="lg:col-span-2 glass-card rounded-[40px] p-8 lg:p-10 text-left space-y-6">
-                    <div className="space-y-2 border-b border-slate-100 pb-4">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Current Verification Status</p>
-                      <h4 className="text-lg font-black text-slate-900 capitalize">{profile?.verification_status}</h4>
-                      
-                      {profile?.verification_status === 'under_review' && (
-                        <div className="mt-2 p-3 bg-amber-50 border border-amber-100 text-amber-600 rounded-xl text-xs flex items-center gap-2">
-                          <Clock className="h-4 w-4 shrink-0" /> Credentials submitted. Administrators will verify within 24 hours.
-                        </div>
-                      )}
-                      {profile?.verification_status === 'verified' && (
-                        <div className="mt-2 p-3 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-xl text-xs flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 shrink-0" /> Your account credentials are verified. You are active in the search directory.
-                        </div>
-                      )}
-                      {profile?.verification_status === 'rejected' && (
-                        <div className="mt-2 p-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-xs space-y-1">
-                          <p className="font-bold flex items-center gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> License credentials rejected.</p>
-                          <p className="text-[11px] font-medium text-rose-500">Reason: {profile.rejection_reason || 'License number could not be validated on the state registry.'}</p>
-                        </div>
-                      )}
-                    </div>
+                  <div className="lg:col-span-2 text-left">
+                    <Card isPremium={true} isNeumorphic={true} className="p-8 lg:p-10 space-y-6">
+                      <div className="space-y-2 border-b border-slate-100/60 pb-4">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Current Verification Status</p>
+                        <h4 className="text-lg font-black text-slate-900 capitalize">{profile?.verification_status}</h4>
+                        
+                        {profile?.verification_status === 'under_review' && (
+                          <div className="mt-2 p-3 bg-amber-50 border border-amber-100 text-amber-600 rounded-xl text-xs flex items-center gap-2">
+                            <Clock className="h-4 w-4 shrink-0" /> Credentials submitted. Administrators will verify within 24 hours.
+                          </div>
+                        )}
+                        {profile?.verification_status === 'verified' && (
+                          <div className="mt-2 p-3 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-xl text-xs flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 shrink-0" /> Your account credentials are verified. You are active in the search directory.
+                          </div>
+                        )}
+                        {profile?.verification_status === 'rejected' && (
+                          <div className="mt-2 p-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-xs space-y-1">
+                            <p className="font-bold flex items-center gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> License credentials rejected.</p>
+                            <p className="text-[11px] font-medium text-rose-500">Reason: {profile.rejection_reason || 'License number could not be validated on the state registry.'}</p>
+                          </div>
+                        )}
+                      </div>
 
-                    {(profile?.verification_status === 'pending' || profile?.verification_status === 'rejected') && (
-                      <form onSubmit={handleSubmitVerification} className="space-y-4">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Proof Document URL (License Registry or PDF Proof)</label>
-                          <input 
-                            type="url" 
-                            required 
-                            value={docUrl} 
-                            onChange={e => setDocUrl(e.target.value)} 
-                            className="input-field" 
-                            placeholder="https://example.com/nurse_license_verification.pdf" 
-                          />
-                        </div>
-                        <button 
-                          type="submit" 
-                          disabled={submittingDoc}
-                          className="btn-primary w-full !py-4 text-xs disabled:opacity-50"
-                        >
-                          {submittingDoc ? 'Submitting Documents...' : 'Submit Licensing Credentials'}
-                        </button>
-                      </form>
-                    )}
+                      {(profile?.verification_status === 'pending' || profile?.verification_status === 'rejected') && (
+                        <form onSubmit={handleSubmitVerification} className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Proof Document URL (License Registry or PDF Proof)</label>
+                            <input 
+                              type="url" 
+                              required 
+                              value={docUrl} 
+                              onChange={e => setDocUrl(e.target.value)} 
+                              className="input-field neumorphic-concave bg-brand-bg border-transparent shadow-none focus:ring-brand-primary" 
+                              placeholder="https://example.com/nurse_license_verification.pdf" 
+                            />
+                          </div>
+                          <Button 
+                            type="submit" 
+                            disabled={submittingDoc}
+                            isLoading={submittingDoc}
+                            variant="primary"
+                            className="w-full"
+                          >
+                            Submit Licensing Credentials
+                          </Button>
+                        </form>
+                      )}
+                    </Card>
                   </div>
                 </div>
               </motion.div>
