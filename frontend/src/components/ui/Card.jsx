@@ -4,10 +4,13 @@ export default function Card({
   children,
   isHoverable = false,
   isPremium = false,
+  isNeumorphic = false,
   className = '',
   ...props
 }) {
-  const baseStyle = "glass-card rounded-[32px] overflow-hidden border-slate-100/50 shadow-md relative";
+  const baseStyle = isNeumorphic
+    ? "rounded-[32px] overflow-hidden relative transition-all duration-300"
+    : "glass-card rounded-[32px] overflow-hidden border-slate-100/50 shadow-md relative";
   
   const hoverStyle = isHoverable 
     ? "glass-card-hover cursor-pointer" 
@@ -17,9 +20,13 @@ export default function Card({
     ? "glass-card-premium rounded-[40px] border-white/80 shadow-[0_30px_60px_-15px_rgba(15,23,42,0.12)]" 
     : "";
 
+  const neomorphicStyle = isNeumorphic
+    ? "neumorphic-convex border-transparent"
+    : "";
+
   return (
     <div 
-      className={`${baseStyle} ${hoverStyle} ${premiumStyle} ${className}`}
+      className={`${baseStyle} ${hoverStyle} ${premiumStyle} ${neomorphicStyle} ${className}`}
       {...props}
     >
       {children}
