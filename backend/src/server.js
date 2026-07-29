@@ -1,6 +1,4 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -15,27 +13,6 @@ const { db, connectPromise } = require('./config/db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Wrap express server in http server for Socket.io
-const server = http.createServer(app);
-
-// Initialize Socket.io with permissive CORS for local demo environments
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    credentials: true
-  }
-});
-
-// Socket.io connection listener
-io.on('connection', (socket) => {
-  console.log(`🔌 Real-time WebSocket connection established: ${socket.id}`);
-  
-  socket.on('disconnect', () => {
-    console.log(`🔌 WebSocket connection closed: ${socket.id}`);
-  });
-});
-
 // Standard Middlewares
 app.use(helmet({
   contentSecurityPolicy: false // Disable CSP for local development styling flexibility
@@ -46,12 +23,6 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-
-// Attach io to requests so controllers can emit events
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
 
 // Routes Mounts
 const authRoutes = require('./routes/auth');
@@ -94,11 +65,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server after database is connected and seeded
+// ponytail: Socket.io real-time server wrapper removed as YAGNI (no controllers or client features use websockets).
+// If real-time notifications are requested, we can re-add it or use lightweight Server-Sent Events (SSE).
 connectPromise.then(() => {
-  server.listen(PORT, () => {
+  app.listen(PORT, () => {
     console.log(`\n=========================================`);
-    console.log(`🚀 Careos API & Real-time Server running on port ${PORT}`);
+    console.log(`🚀 Careos API Server running on port ${PORT}`);
     console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
     console.log(`=========================================\n`);
   });
