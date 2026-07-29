@@ -1,4 +1,4 @@
-import React from 'react';
+// ponytail: Unused React import removed.
 import { Shield, Lock, FileText, Scale, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 
