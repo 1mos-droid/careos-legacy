@@ -4,8 +4,11 @@ import {
   FileText, Calendar, DollarSign, Star, AlertTriangle, 
   CheckCircle2, Clock, X, MessageSquare, ArrowRight, Activity, Search
 } from 'lucide-react';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../utils/api';
+import doctorShotImg from '../assets/doctor_shot.jpg';
 
 export default function FamilyDashboard({ user, token }) {
   const navigate = useNavigate();
@@ -18,6 +21,10 @@ export default function FamilyDashboard({ user, token }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Cancellation Drawer state
+  const [cancellingBookingId, setCancellingBookingId] = useState(null);
+  const [isProcessingCancel, setIsProcessingCancel] = useState(false);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -36,15 +43,7 @@ export default function FamilyDashboard({ user, token }) {
     fetchBookings();
   }, []);
 
-  const handleCancelBooking = async (id) => {
-    if (!window.confirm('Are you sure you want to cancel this care reservation?')) return;
-    try {
-      await api.patch(`/bookings/${id}`, { status: 'cancelled' });
-      fetchBookings();
-    } catch (err) {
-      alert(err || 'Failed to cancel reservation.');
-    }
-  };
+
 
   const handleOpenReview = (booking) => {
     setSelectedBooking(booking);
@@ -113,13 +112,14 @@ export default function FamilyDashboard({ user, token }) {
             </h1>
             <p className="text-slate-500 font-medium italic">Welcome back, {user?.name.split(' ')[0]}. Manage your active care schedules and reviews here.</p>
           </div>
-          <button 
+          <Button 
             onClick={() => navigate('/directory')}
-            className="btn-primary !py-4 !px-8 text-sm flex items-center gap-3 group shadow-md"
+            leftIcon={Search}
+            rightIcon={ArrowRight}
+            className="group"
           >
-            <Search className="h-4 w-4" /> Book New Caregiver
-            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-          </button>
+            Book New Caregiver
+          </Button>
         </div>
 
         {error && (
@@ -134,23 +134,24 @@ export default function FamilyDashboard({ user, token }) {
           <h3 className="text-xl font-black text-slate-900 tracking-tight">Care Schedules Logs</h3>
 
           {bookings.length === 0 ? (
-            <div className="glass-card rounded-[40px] p-12 text-center space-y-6 max-w-2xl mx-auto border-dashed border-2">
+            <Card isPremium={true} isNeumorphic={true} className="p-12 text-center space-y-6 max-w-2xl mx-auto border-dashed border-2 border-slate-200">
               <div className="h-16 w-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
                 <FileText className="h-8 w-8" />
               </div>
               <div className="space-y-2">
-                <h4 className="text-lg font-black text-slate-900">No Care Bookings Found</h4>
-                <p className="text-sm text-slate-500 max-w-md mx-auto">
-                  You have not requested any care sessions yet. Check our registered database to book a professional nurse.
+                <h4 className="text-lg font-black text-slate-900">Your Care Console is Looking a Bit Lonely! 🌸</h4>
+                <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                  No active caregiver reservations yet. Whenever you're ready, browse our verified registry to find the perfect clinical support for your loved ones.
                 </p>
               </div>
-              <button 
+              <Button 
                 onClick={() => navigate('/directory')}
-                className="btn-primary !py-4 !px-8 text-xs inline-flex items-center gap-2 cursor-pointer"
+                rightIcon={ArrowRight}
+                size="sm"
               >
-                Browse Registered Nurses <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
+                Browse Registered Nurses
+              </Button>
+            </Card>
           ) : (
             <div className="grid gap-6">
               {bookings.map((booking) => {
@@ -159,8 +160,12 @@ export default function FamilyDashboard({ user, token }) {
                   <motion.div 
                     layoutId={`booking-${booking.id}`}
                     key={booking.id}
-                    className="glass-card rounded-[32px] p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 hover:shadow-xl transition-all duration-300 border-slate-100/50"
                   >
+                    <Card
+                      isPremium={true}
+                      isNeumorphic={true}
+                      className="p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 border-slate-100/50"
+                    >
                     <div className="flex gap-5 items-center">
                       <div className="h-16 w-16 rounded-[22px] bg-brand-primary/10 flex items-center justify-center text-brand-primary text-xl font-black shrink-0 border border-brand-primary/10">
                         {booking.nurse_name?.charAt(0) || 'N'}
@@ -181,7 +186,7 @@ export default function FamilyDashboard({ user, token }) {
                     <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between lg:justify-center w-full lg:w-auto border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100 gap-4 shrink-0">
                       <div className="text-left lg:text-right">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Compensation</p>
-                        <p className="text-xl font-black text-slate-900">${booking.total_price}</p>
+                        <p className="text-xl font-black text-slate-900">GH₵{booking.total_price?.toLocaleString()}</p>
                       </div>
 
                       <div className="flex items-center gap-3">
@@ -190,22 +195,27 @@ export default function FamilyDashboard({ user, token }) {
                           {booking.status}
                         </span>
 
-                        {(booking.status === 'pending' || booking.status === 'approved') && (
-                          <button
-                            onClick={() => handleCancelBooking(booking.id)}
-                            className="px-4 py-2 border border-rose-100 text-rose-500 hover:bg-rose-50 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                        {booking.status === 'pending' && (
+                          <Button
+                            onClick={() => setCancellingBookingId(booking.id)}
+                            variant="rose"
+                            size="sm"
+                            className="!py-2 !px-4"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         )}
 
                         {booking.status === 'completed' && booking.has_reviewed === 0 && (
-                          <button
+                          <Button
                             onClick={() => handleOpenReview(booking)}
-                            className="btn-primary !py-2.5 !px-5 text-xs inline-flex items-center gap-1.5 shadow-md cursor-pointer"
+                            variant="primary"
+                            size="sm"
+                            leftIcon={MessageSquare}
+                            className="!py-2.5 !px-5"
                           >
-                            <MessageSquare className="h-3.5 w-3.5" /> Write Review
-                          </button>
+                            Write Review
+                          </Button>
                         )}
 
                         {booking.status === 'completed' && booking.has_reviewed === 1 && (
@@ -215,7 +225,8 @@ export default function FamilyDashboard({ user, token }) {
                         )}
                       </div>
                     </div>
-                  </motion.div>
+                  </Card>
+                </motion.div>
                 );
               })}
             </div>
@@ -226,7 +237,7 @@ export default function FamilyDashboard({ user, token }) {
       {/* Review Dialog Modal */}
       <AnimatePresence>
         {selectedBooking && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -239,8 +250,9 @@ export default function FamilyDashboard({ user, token }) {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="w-full max-w-lg glass-card rounded-[40px] p-8 lg:p-10 shadow-2xl relative z-10 bg-white"
+              className="w-full max-w-lg relative z-10"
             >
+              <Card isPremium={true} isNeumorphic={true} className="p-8 lg:p-10 shadow-2xl">
               <div className="flex justify-between items-start mb-6">
                 <div className="text-left space-y-1">
                   <h3 className="text-2xl font-black text-slate-900 tracking-tight">Submit Testimonial</h3>
@@ -280,28 +292,143 @@ export default function FamilyDashboard({ user, token }) {
                     rows={4}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    className="input-field py-3 text-sm focus:ring-brand-primary"
+                    className="input-field py-3 text-sm focus:ring-brand-primary neumorphic-concave bg-brand-bg border-transparent shadow-none"
                     placeholder="Provide details on clinical expertise, communication, and responsiveness..."
                   />
                 </div>
 
                 <div className="flex gap-3">
-                  <button 
+                  <Button 
                     type="button" 
                     onClick={handleCloseReview}
-                    className="btn-glass flex-1 !py-3.5 !px-4 text-xs"
+                    variant="glass"
+                    className="flex-1"
                   >
                     Cancel
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     type="submit" 
                     disabled={submittingReview}
-                    className="btn-primary flex-1 !py-3.5 !px-4 text-xs disabled:opacity-50"
+                    isLoading={submittingReview}
+                    variant="primary"
+                    className="flex-1"
                   >
-                    {submittingReview ? 'Submitting...' : 'Post Testimonial'}
-                  </button>
+                    Post Testimonial
+                  </Button>
                 </div>
               </form>
+              </Card>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Cancellation Drawer (Hamburger Confirm Panel) */}
+      <AnimatePresence>
+        {cancellingBookingId && (
+          <div className="fixed inset-0 z-[200] flex justify-end">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { if (!isProcessingCancel) setCancellingBookingId(null); }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            
+            {/* Drawer */}
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md h-full bg-brand-bg shadow-2xl p-8 flex flex-col justify-between border-l border-slate-100"
+            >
+              <div>
+                {/* Header with hamburger menu icon close trigger */}
+                <div className="flex justify-between items-center mb-10">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-rose-500 animate-ping" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cancel Care Reservation</span>
+                  </div>
+                  <button 
+                    onClick={() => { if (!isProcessingCancel) setCancellingBookingId(null); }}
+                    className="p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>                {/* Visual Motion Image of Doctor Administering Shot */}
+                <div className="space-y-6 text-center my-8">
+                  <div className="relative mx-auto w-52 h-52 overflow-hidden rounded-[32px] border border-slate-100/80 shadow-md bg-white p-2">
+                    <motion.img 
+                      src={doctorShotImg} 
+                      alt="Caregiver administering shot" 
+                      className="w-full h-full object-cover rounded-[24px]"
+                      animate={{ 
+                        scale: [1, 1.03, 1],
+                        rotate: [0, 0.5, -0.5, 0] 
+                      }}
+                      transition={{ 
+                        duration: 5, 
+                        repeat: Infinity, 
+                        ease: "easeInOut" 
+                      }}
+                    />
+                  </div>
+
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Change of Plans? 🌿</h3>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-xs mx-auto">
+                    We get it – plans shift and life happens! Cancelling this care session is completely stress-free. We'll gently release the provider's slot so they can help another family.
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions & Custom Loader */}
+              <div className="space-y-4">
+                {isProcessingCancel ? (
+                  <div className="flex flex-col items-center justify-center py-6 space-y-3">
+                    <div className="relative h-10 w-10 flex items-center justify-center">
+                      <div className="animate-spin absolute inset-0 rounded-full border-4 border-brand-primary/20 border-t-brand-primary" />
+                      {/* Floating custom icon inside loader */}
+                      <Activity className="h-4 w-4 text-brand-primary animate-pulse" />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Processing cancellation...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      onClick={async () => {
+                        setIsProcessingCancel(true);
+                        try {
+                          await api.patch(`/bookings/${cancellingBookingId}`, { status: 'cancelled' });
+                          await fetchBookings();
+                          setCancellingBookingId(null);
+                        } catch (err) {
+                          setError(err || 'Failed to cancel reservation.');
+                        } finally {
+                          setIsProcessingCancel(false);
+                        }
+                      }}
+                      variant="rose"
+                      className="w-full py-4"
+                    >
+                      Yes, Cancel Booking
+                    </Button>
+                    <Button 
+                      onClick={() => setCancellingBookingId(null)}
+                      variant="glass"
+                      className="w-full py-4"
+                    >
+                      No, Keep Booking
+                    </Button>
+                  </div>
+                )}
+                
+                <p className="text-[9px] text-center text-slate-400 font-medium">
+                  CareOS Safety & Trust cancellation guidelines apply.
+                </p>
+              </div>
+
             </motion.div>
           </div>
         )}
