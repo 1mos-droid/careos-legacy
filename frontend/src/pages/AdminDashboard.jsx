@@ -181,7 +181,7 @@ export default function AdminDashboard() {
       {/* Rejection Modal */}
       <AnimatePresence>
         {selectedNurse && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-6">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-6">
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="glass-card w-full max-w-md p-8 rounded-[40px] relative text-left">
               <button onClick={() => setSelectedNurse(null)} className="absolute top-6 right-6 text-slate-400"><X className="h-6 w-6" /></button>
               <div className="space-y-6">
